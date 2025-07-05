@@ -1,53 +1,28 @@
 {
   "name": "tip-screen-app",
   "version": "1.0.0",
-  "description": "App divertida para despedidas con sistema de propinas",
   "private": true,
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
-    "export": "next export"
+    "lint": "next lint"
   },
   "dependencies": {
-    "next": "^14.0.4",
+    "next": "^14.2.30",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/react": "^18.2.45",
-    "@types/react-dom": "^18.2.18",
-    "@types/uuid": "^9.0.7",
     "autoprefixer": "^10.4.16",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.0.4",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/TU_USUARIO/tip-screen-app.git"
-  },
-  "keywords": [
-    "nextjs",
-    "react",
-    "despedida",
-    "propinas",
-    "mobile",
-    "tablet"
-  ],
-  "author": "SoothSayer Technologies Chile",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/TU_USUARIO/tip-screen-app/issues"
-  },
-  "homepage": "https://github.com/TU_USUARIO/tip-screen-app#readme",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
   }
 }
