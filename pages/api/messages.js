@@ -1,7 +1,8 @@
 // pages/api/messages.js
-import { getSession, setSession } from '../../lib/store.js';
+import { getSession, addMessage, getMessages } from '../../lib/store.js';
+import { sanitizeText } from '../../lib/utils.js';
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -26,46 +27,37 @@ export default function handler(req, res) {
         });
       }
       
-      let session = getSession(sessionId);
-      
-      // Si no existe la sesión, la creamos (fallback)
+      // Verificar que la sesión existe
+      const session = await getSession(sessionId);
       if (!session) {
-        console.log('Sesión no encontrada, creando nueva:', sessionId);
-        session = {
-          id: sessionId,
-          name: 'Despedida de Amigos',
-          createdAt: new Date().toISOString(),
-          messages: []
-        };
+        return res.status(404).json({
+          success: false,
+          error: 'Sesión no encontrada'
+        });
       }
       
-      const newMessage = {
-        id: Date.now().toString(),
-        autor: autor?.trim() || 'Anónimo',
-        texto: texto.trim(),
-        propina: propina || 'Sin propina',
-        timestamp: new Date().toISOString(),
-        createdAt: new Date().toLocaleString('es-CL', {
-          timeZone: 'America/Santiago',
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
+      // Sanitizar datos de entrada
+      const messageData = {
+        autor: (autor?.trim() || 'Anónimo').substring(0, 50),
+        texto: sanitizeText(texto),
+        propina: (propina || 'Sin propina').substring(0, 50)
       };
       
-      session.messages.push(newMessage);
-      setSession(sessionId, session);
+      // Agregar mensaje a la base de datos
+      const newMessage = await addMessage(sessionId, messageData);
+      
+      // Obtener el total actualizado de mensajes
+      const allMessages = await getMessages(sessionId);
       
       console.log('Mensaje guardado exitosamente:', newMessage.id);
-      console.log('Total mensajes en sesión:', session.messages.length);
+      console.log('Total mensajes en sesión:', allMessages.length);
       
       res.status(201).json({ 
         success: true,
         message: 'Mensaje guardado exitosamente',
         messageId: newMessage.id,
-        totalMessages: session.messages.length
+        totalMessages: allMessages.length,
+        data: newMessage
       });
       
     } catch (error) {
@@ -89,24 +81,28 @@ export default function handler(req, res) {
         });
       }
       
-      const session = getSession(sessionId);
+      // Verificar que la sesión existe
+      const session = await getSession(sessionId);
       if (!session) {
-        console.log('Sesión no encontrada para mensajes:', sessionId);
         return res.status(404).json({ 
           success: false,
           error: 'Sesión no encontrada' 
         });
       }
       
-      console.log('Mensajes encontrados:', session.messages?.length || 0);
+      // Obtener mensajes
+      const messages = await getMessages(sessionId);
+      
+      console.log('Mensajes encontrados:', messages.length);
       
       res.status(200).json({
         success: true,
         sessionId: session.id,
         sessionName: session.name,
-        messages: session.messages || [],
-        totalMessages: session.messages?.length || 0,
-        createdAt: session.createdAt
+        messages: messages,
+        totalMessages: messages.length,
+        createdAt: session.created_at,
+        active: session.active
       });
       
     } catch (error) {

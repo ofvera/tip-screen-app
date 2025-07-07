@@ -1,27 +1,10 @@
 // pages/api/session.js
-import { getSession, setSession } from '../../lib/store.js';
+import { getSession, setSession, initializeDefaultSession } from '../../lib/store.js';
 
 // Sesión fija para Martin & Isi
 const FIXED_SESSION_ID = 'martin-isi';
-const FIXED_SESSION_DATA = {
-  id: FIXED_SESSION_ID,
-  name: 'Martin & Isi - USA Farewell',
-  createdAt: new Date().toISOString(),
-  messages: []
-};
 
-// Inicializar la sesión fija si no existe
-function initializeFixedSession() {
-  let session = getSession(FIXED_SESSION_ID);
-  if (!session) {
-    console.log('Inicializando sesión fija para Martin & Isi');
-    session = { ...FIXED_SESSION_DATA };
-    setSession(FIXED_SESSION_ID, session);
-  }
-  return session;
-}
-
-export default function handler(req, res) {
+export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -33,16 +16,17 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    // Para compatibilidad, pero siempre devuelve la sesión fija
     try {
-      const session = initializeFixedSession();
+      // Siempre inicializar/devolver la sesión fija
+      const session = await initializeDefaultSession();
       
-      console.log('Sesión fija inicializada:', FIXED_SESSION_ID);
+      console.log('Sesión Martin & Isi inicializada:', FIXED_SESSION_ID);
       
       res.status(201).json({ 
         success: true,
         sessionId: FIXED_SESSION_ID,
-        message: 'Sesión Martin & Isi lista'
+        message: 'Sesión Martin & Isi lista',
+        data: session
       });
     } catch (error) {
       console.error('Error inicializando sesión fija:', error);
@@ -65,12 +49,27 @@ export default function handler(req, res) {
         });
       }
       
-      const session = initializeFixedSession();
+      // Intentar obtener la sesión, si no existe la creamos
+      let session = await getSession(FIXED_SESSION_ID);
       
-      console.log('Sesión Martin & Isi encontrada. Mensajes:', session.messages?.length || 0);
+      if (!session) {
+        session = await initializeDefaultSession();
+      }
+      
+      // Obtener los mensajes de la sesión
+      const { getMessages } = await import('../../lib/store.js');
+      const messages = await getMessages(FIXED_SESSION_ID);
+      
+      console.log('Sesión Martin & Isi encontrada. Mensajes:', messages.length);
+      
       res.status(200).json({
         success: true,
-        ...session
+        id: session.id,
+        name: session.name,
+        active: session.active,
+        created_at: session.created_at,
+        messages: messages || [],
+        totalMessages: messages ? messages.length : 0
       });
     } catch (error) {
       console.error('Error obteniendo sesión:', error);

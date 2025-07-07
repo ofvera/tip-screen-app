@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import ShareButtons from '../../components/ShareButtons.js';
 
 export default function MessagesViewer() {
   const router = useRouter();
@@ -56,59 +57,6 @@ export default function MessagesViewer() {
     setLoading(true);
     setError(false);
     fetchMessages();
-  };
-
-  const shareSession = async () => {
-    const url = `${window.location.origin}/session/martin-isi`;
-    const text = `🇺🇸 Help Martin & Isi say goodbye! Leave your farewell message: ${url}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Martin & Isi Farewell Messages',
-          text: text,
-          url: url,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-        copyToClipboard(url);
-      }
-    } else {
-      copyToClipboard(url);
-    }
-  };
-
-  const copyToClipboard = (text) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert('🇺🇸 Link copied to clipboard!');
-      }).catch(() => {
-        fallbackCopyTextToClipboard(text);
-      });
-    } else {
-      fallbackCopyTextToClipboard(text);
-    }
-  };
-
-  const fallbackCopyTextToClipboard = (text) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.position = "fixed";
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-      document.execCommand('copy');
-      alert('🇺🇸 Link copied to clipboard!');
-    } catch (err) {
-      console.error('Fallback: Oops, unable to copy', err);
-      alert('Could not copy automatically. URL: ' + text);
-    }
-    
-    document.body.removeChild(textArea);
   };
 
   if (loading) {
@@ -194,14 +142,20 @@ export default function MessagesViewer() {
                 >
                   🔄 Refresh
                 </button>
-                <button
-                  onClick={shareSession}
-                  className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm transition-colors"
-                >
-                  📱 Share
-                </button>
               </div>
             </div>
+          </div>
+
+          {/* Botones de compartir */}
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6 border-2 border-yellow-400">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
+              📤 Compartir Mensajes
+            </h3>
+            <ShareButtons 
+              messages={messages}
+              sessionName={sessionData?.sessionName || 'Martin & Isi - USA Farewell'}
+              sessionId={sessionId}
+            />
           </div>
 
           {/* Navigation con colores USA */}
@@ -251,27 +205,33 @@ export default function MessagesViewer() {
                       <div className="flex items-center mb-1">
                         <span className="text-blue-700 text-lg sm:text-xl mr-2">👤</span>
                         <h3 className="font-bold text-base sm:text-lg text-gray-800">
-                          {message.autor}
+                          {message.author}
                         </h3>
                       </div>
                       <p className="text-xs sm:text-sm text-gray-500">
-                        {message.createdAt}
+                        {new Date(message.created_at).toLocaleDateString('es-CL', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
                     <div className="text-left sm:text-right">
                       <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs font-bold ${
-                        message.propina.includes('Cagao') 
+                        message.tip && message.tip.includes('Cagao') 
                           ? 'bg-red-100 text-red-600' 
                           : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {message.propina}
+                        {message.tip || 'Sin propina'}
                       </span>
                     </div>
                   </div>
                   
                   <div className="bg-gradient-to-r from-red-50 to-blue-50 rounded-lg p-3 sm:p-4 border-l-2 border-blue-600">
                     <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
-                      "{message.texto}"
+                      "{message.text}"
                     </p>
                   </div>
                 </div>
